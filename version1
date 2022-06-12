@@ -1,0 +1,214 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace Tetris
+{
+    public class Tile : PictureBox
+    {
+
+    }
+     static class ShapesHandler
+    {
+        private static Shape[] shapesArray;
+        static ShapesHandler()
+        {
+            shapesArray = new Shape[] {
+                new Shape {
+                    Width = 2,
+                    Height = 2,
+                    Dots = new int[,]
+                    {
+                        { 1, 1 },
+                        { 1, 1 }
+                    }
+                 },
+                 new Shape {
+                    Width = 1,
+                    Height = 4,
+                    Dots = new int[,]
+                    {
+                        { 1 },
+                        { 1 },
+                        { 1 },
+                        { 1 }
+                    }
+                 },
+                  new Shape {
+                     Width = 3,
+                    Height = 2,
+                    Dots = new int[,]
+                    {
+                        { 0,1,0},
+                        {1,1,1 }
+                    }
+                 },
+                  new Shape {
+                      Width = 3,
+                    Height = 2,
+                    Dots = new int[,]
+                    {
+                        { 0,0,1},
+                        {1,1,1 }
+                    }
+                 },
+                   new Shape {
+                       Width = 3,
+                    Height = 2,
+                    Dots = new int[,]
+                    {
+                        { 1,0,0},
+                        {1,1,1 }
+                    }
+                 },
+                    new Shape {
+                        Width = 3,
+                    Height = 2,
+                    Dots = new int[,]
+                    {
+                        { 1,1,0},
+                        {0,1,1 }
+                    }
+                 },
+                new Shape {
+                    Width = 3,
+                    Height = 2,
+                    Dots = new int[,]
+                    {
+                        { 0,1,1},
+                        {1,1, 0}
+                    }
+                 },
+
+            };
+        }
+        public static Shape GetRandomShape()
+        {
+            Random rand = new Random();
+            Shape shape = shapesArray[rand.Next(0, shapesArray.Length)];
+            return shape;
+        }
+    }
+    public class Shape
+    {
+        public int[,] Dots;
+        public  int Width;
+        public int Height;
+    }
+    
+    public partial class Form1 : Form
+    {
+        Shape currentShape;
+        public const int rows = 15;
+        public const int cols = 20;
+        public int[,] canvasDots = new int[rows, cols];
+        public Tile[,] tileControls = new Tile[rows,cols];
+        int currentX;
+        int currentY;
+        private Shape getRandomShapeWithCenterAligned()
+        {
+            Shape shape = ShapesHandler.GetRandomShape();
+            double middleOfRows = rows / 2;
+            currentX = (int)Math.Ceiling(middleOfRows);
+            currentY = -shape.Height;
+            return shape;
+        }
+        private void drawShape()
+        {
+            for (int y = 0; y < currentShape.Height; y++)
+            {
+                for (int x = 0; x < currentShape.Width; x++)
+                {
+                    if (currentShape.Dots[x,y] == 1)
+                    {
+                        tileControls[x, y].BackColor = Color.Black;
+                    }
+                }
+            }
+        }
+        private bool moveShapeIfPossible(int moveDown = 0, int moveSide = 0){
+            int newX = currentX + moveSide;
+            int newY = currentY + moveDown;
+            for (int y = 0; y < currentShape.Height; y++)
+            {
+                for (int x = 0; x < currentShape.Width; x++)
+                {
+                    try
+                    {
+                        if (newY + y > 0 && canvasDots[newX + x, newY + y] == 1 && currentShape.Dots[x, y] == 1)
+                        {
+                            return false;
+                        }
+                    } catch (IndexOutOfRangeException)
+                    {
+                        return false;
+                    }
+                }
+            }
+            currentX = newX;
+            currentY = newY;
+            drawShape();
+            return true;
+         }
+        private void updateCanvasDotsWithCurrentShape()
+        {
+            for (int y = 0; y < currentShape.Height; y++)
+            {
+                for (int x = 0; x < currentShape.Width; x++)
+                {
+                    if (currentShape.Dots[x,y] == 1)
+                    {
+                        checkIfGameOver();
+                        canvasDots[currentX + x, currentY + y] = 1;
+                    }
+                }
+            }
+        }
+        private void checkIfGameOver()
+        {
+            if (currentY < 0)
+            {
+                gameTimer.Stop();
+            }
+        }
+        public Form1()
+        {
+            InitializeComponent();
+            loadCanvas();
+            currentShape = getRandomShapeWithCenterAligned();
+        }
+        private void loadCanvas()
+        {
+            
+            for (int y = 0; y < cols; y++)
+            {
+                for (int x = 0; x < rows; x++)
+                {
+                    Tile tile = new Tile()
+                    {
+                        Size = new Size(25, 25),
+                        Location = new Point(x * rows, y * cols),
+                        BackColor = Color.DarkGray,
+                        Visible = true,
+
+
+                    };
+                    canvasDots[x, y] = 0;
+                    this.Controls.Add(tile);
+                    
+                }
+            }
+        }
+
+        private void gameTimer_Tick(object sender, EventArgs e)
+        {
+
+        }
+    }
+}
